@@ -188,14 +188,14 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
 
             // Before checking outputs, broadcast connect event to allow HAL to retrieve dynamic
             // parameters on newly connected devices (instead of opening the outputs...)
-            broadcastDeviceConnectionState(device, state);
+            //broadcastDeviceConnectionState(device, state);
 
             if (checkOutputsForDevice(device, state, outputs) != NO_ERROR) {
                 mAvailableOutputDevices.remove(device);
 
                 mHwModules.cleanUpForDevice(device);
 
-                broadcastDeviceConnectionState(device, AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE);
+                //broadcastDeviceConnectionState(device, AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE);
                 return INVALID_OPERATION;
             }
             if (deviceType == AUDIO_DEVICE_OUT_AUX_DIGITAL) {
@@ -226,7 +226,7 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
             ALOGV("%s() disconnecting output device %s", __func__, device->toString().c_str());
 
             // Send Disconnect to HALs
-            broadcastDeviceConnectionState(device, state);
+            //broadcastDeviceConnectionState(device, state);
 
             // remove device from available output devices
             mAvailableOutputDevices.remove(device);
@@ -246,7 +246,7 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
             device->setEncodedFormat(AUDIO_FORMAT_DEFAULT);
 
             if (deviceType == AUDIO_DEVICE_OUT_AUX_DIGITAL) {
-                mEngine->setDpConnAndAllowedForVoice(false);
+                //mEngine->setDpConnAndAllowedForVoice(false);
             }
             } break;
 
@@ -256,7 +256,7 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
         }
 
         // Propagate device availability to Engine
-        setEngineDeviceConnectionState(device, state);
+        //setEngineDeviceConnectionState(device, state);
 
         if (!outputs.isEmpty()) {
             for (size_t i = 0; i < outputs.size(); i++) {
@@ -319,7 +319,7 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
             DeviceVector newDevices = getNewOutputDevices(mPrimaryOutput, false /*fromCache*/);
             updateCallRouting(newDevices);
         }
-        const DeviceVector msdOutDevices = getMsdAudioOutDevices();
+        //const DeviceVector msdOutDevices = NULL;//getMsdAudioOutDevices();
         for (size_t i = 0; i < mOutputs.size(); i++) {
             sp<SwAudioOutputDescriptor> desc = mOutputs.valueAt(i);
             if (desc->isActive() && ((mEngine->getPhoneState() != AUDIO_MODE_IN_CALL) ||
@@ -328,8 +328,8 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
                 // do not force device change on duplicated output because if device is 0, it will
                 // also force a device 0 for the two outputs it is duplicated to which may override
                 // a valid device selection on those outputs.
-                bool force = (msdOutDevices.isEmpty() || msdOutDevices != desc->devices())
-                        && !desc->isDuplicated()
+                bool force = /*(msdOutDevices.isEmpty() || msdOutDevices != desc->devices())*/
+                       /* && */!desc->isDuplicated()
                         && (!device_distinguishes_on_address(deviceType)
                                 // always force when disconnecting (a non-duplicated device)
                                 || (state == AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE));
@@ -363,12 +363,12 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
 
             // Before checking intputs, broadcast connect event to allow HAL to retrieve dynamic
             // parameters on newly connected devices (instead of opening the inputs...)
-            broadcastDeviceConnectionState(device, state);
+            //broadcastDeviceConnectionState(device, state);
 
             if (checkInputsForDevice(device, state) != NO_ERROR) {
                 mAvailableInputDevices.remove(device);
 
-                broadcastDeviceConnectionState(device, AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE);
+                //broadcastDeviceConnectionState(device, AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE);
 
                 mHwModules.cleanUpForDevice(device);
 
@@ -387,7 +387,7 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
             ALOGV("setDeviceConnectionState() disconnecting input device %x", deviceType);
 
             // Set Disconnect to HALs
-            broadcastDeviceConnectionState(device, state);
+            //broadcastDeviceConnectionState(device, state);
 
             mAvailableInputDevices.remove(device);
 
@@ -401,7 +401,7 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
         }
 
         // Propagate device availability to Engine
-        setEngineDeviceConnectionState(device, state);
+        //setEngineDeviceConnectionState(device, state);
 
         checkCloseInputs();
         /*audio policy: fix call volume over USB*/
@@ -439,7 +439,7 @@ void AudioPolicyManagerCustom::chkDpConnAndAllowedForVoice()
     if (result.get(String8("dp_for_voice"), value) == NO_ERROR) {
         connAndAllowed = value.contains("true");
     }
-    mEngine->setDpConnAndAllowedForVoice(connAndAllowed);
+    //mEngine->setDpConnAndAllowedForVoice(connAndAllowed);
 }
 
 bool AudioPolicyManagerCustom::isInvalidationOfMusicStreamNeeded(const audio_attributes_t &attr)
@@ -1113,7 +1113,7 @@ status_t AudioPolicyManagerCustom::stopSource(const sp<SwAudioOutputDescriptor>&
                 }
             }
             // update the outputs if stopping one with a stream that can affect notification routing
-            handleNotificationRoutingForStream(stream);
+            //handleNotificationRoutingForStream(stream);
         }
 
         if (stream == AUDIO_STREAM_ENFORCED_AUDIBLE &&
@@ -1272,7 +1272,7 @@ status_t AudioPolicyManagerCustom::startSource(const sp<SwAudioOutputDescriptor>
 
         // update the outputs if starting an output with a stream that can affect notification
         // routing
-        handleNotificationRoutingForStream(stream);
+        //handleNotificationRoutingForStream(stream);
 
         // force reevaluating accessibility routing when ringtone or alarm starts
         if (followsSameRouting(clientAttr, attributes_initializer(AUDIO_USAGE_ALARM))) {
