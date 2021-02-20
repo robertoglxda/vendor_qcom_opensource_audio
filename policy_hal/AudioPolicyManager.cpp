@@ -1432,8 +1432,8 @@ audio_io_handle_t AudioPolicyManagerCustom::getOutputForDevices(
     status_t status;
 
     // Discard haptic channel mask when forcing muting haptic channels.
-    audio_channel_mask_t channelMask = forceMutingHaptic
-            ? (config->channel_mask & ~AUDIO_CHANNEL_HAPTIC_ALL) : config->channel_mask;
+    audio_channel_mask_t channelMask = (audio_channel_mask_t)(forceMutingHaptic
+            ? (config->channel_mask & ~AUDIO_CHANNEL_HAPTIC_ALL) : config->channel_mask);
 
     if (stream < AUDIO_STREAM_MIN || stream >= AUDIO_STREAM_CNT) {
         ALOGE("%s: invalid stream %d", __func__, stream);
@@ -1757,7 +1757,7 @@ audio_io_handle_t AudioPolicyManagerCustom::getOutputForDevices(
     profile = getProfileForOutput(devices,
                                         config->sample_rate,
                                         config->format,
-                                        channelMask,
+                                        (audio_channel_mask_t)channelMask,
                                         (audio_output_flags_t)*flags,
                                         true /* directOnly */);
 
@@ -1877,7 +1877,8 @@ non_direct_output:
             ALOGI("FLAG None hence request for a primary output");
         }
 
-        output = selectOutput(outputs, *flags, config->format, channelMask);
+        output = selectOutput(outputs, *flags, config->format,
+                (audio_channel_mask_t)channelMask);
     }
 
     ALOGW_IF((output == 0), "getOutputForDevice() could not find output for stream %d, "
