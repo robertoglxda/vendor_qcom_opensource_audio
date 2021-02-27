@@ -926,10 +926,7 @@ void AudioPolicyManagerCustom::setPhoneState(audio_mode_t state)
         if (state == AUDIO_MODE_IN_CALL) {
             updateCallRouting(rxDevices, delayMs);
         } else if (oldState == AUDIO_MODE_IN_CALL) {
-            if (mCallRxPatch != 0) {
-                mpClientInterface->releaseAudioPatch(mCallRxPatch->getAfHandle(), 0);
-                mCallRxPatch.clear();
-            }
+            disconnectTelephonyRxAudioSource();
             if (mCallTxPatch != 0) {
                 mpClientInterface->releaseAudioPatch(mCallTxPatch->getAfHandle(), 0);
                 mCallTxPatch.clear();
