@@ -315,11 +315,9 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
             checkCloseOutputs();
         }
 
-        if (mEngine->getPhoneState() == AUDIO_MODE_IN_CALL && hasPrimaryOutput()) {
-            DeviceVector newDevices = getNewOutputDevices(mPrimaryOutput, false /*fromCache*/);
-            updateCallRouting(newDevices);
-        }
-        //const DeviceVector msdOutDevices = NULL;//getMsdAudioOutDevices();
+	(void)updateCallRouting(false /*fromCache*/);
+
+	//const DeviceVector msdOutDevices = NULL;//getMsdAudioOutDevices();
         for (size_t i = 0; i < mOutputs.size(); i++) {
             sp<SwAudioOutputDescriptor> desc = mOutputs.valueAt(i);
             if (desc->isActive() && ((mEngine->getPhoneState() != AUDIO_MODE_IN_CALL) ||
@@ -409,10 +407,7 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
         // getDeviceForStrategy() cache
         updateDevicesAndOutputs();
 
-        if (mEngine->getPhoneState() == AUDIO_MODE_IN_CALL && hasPrimaryOutput()) {
-            DeviceVector newDevices = getNewOutputDevices(mPrimaryOutput, false /*fromCache*/);
-            updateCallRouting(newDevices);
-        }
+	(void)updateCallRouting(false /*fromCache*/);
 
         if (state == AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE) {
             cleanUpForDevice(device);
@@ -914,25 +909,22 @@ void AudioPolicyManagerCustom::setPhoneState(audio_mode_t state)
     }
 
     if (hasPrimaryOutput()) {
-        // Note that despite the fact that getNewOutputDevice() is called on the primary output,
-        // the device returned is not necessarily reachable via this output
-        DeviceVector rxDevices = getNewOutputDevices(mPrimaryOutput, false /*fromCache*/);
-        // force routing command to audio hardware when ending call
-        // even if no device change is needed
-        if (isStateInCall(oldState) && rxDevices.isEmpty()) {
-            rxDevices = mPrimaryOutput->devices();
-        }
-
         if (state == AUDIO_MODE_IN_CALL) {
-            updateCallRouting(rxDevices, delayMs);
-        } else if (oldState == AUDIO_MODE_IN_CALL) {
-            disconnectTelephonyRxAudioSource();
-            if (mCallTxPatch != 0) {
-                mpClientInterface->releaseAudioPatch(mCallTxPatch->getAfHandle(), 0);
-                mCallTxPatch.clear();
-            }
-            setOutputDevices(mPrimaryOutput, rxDevices, force, 0);
+            (void)updateCallRouting(false /*fromCache*/, delayMs);
         } else {
+            DeviceVector rxDevices = getNewOutputDevices(mPrimaryOutput, false /*fromCache*/);
+            // force routing command to audio hardware when ending call
+            // even if no device change is needed
+            if (isStateInCall(oldState) && rxDevices.isEmpty()) {
+                rxDevices = mPrimaryOutput->devices();
+            }
+            if (oldState == AUDIO_MODE_IN_CALL) {
+                disconnectTelephonyRxAudioSource();
+                if (mCallTxPatch != 0) {
+                    mpClientInterface->releaseAudioPatch(mCallTxPatch->getHandle(), 0);
+                    mCallTxPatch.clear();
+                }
+            }
             setOutputDevices(mPrimaryOutput, rxDevices, force, 0);
         }
     }
@@ -989,12 +981,10 @@ void AudioPolicyManagerCustom::setForceUse(audio_policy_force_use_t usage,
     if (usage == AUDIO_POLICY_FORCE_FOR_COMMUNICATION) {
         delayMs = TOUCH_SOUND_FIXED_DELAY_MS;
     }
-    if (mEngine->getPhoneState() == AUDIO_MODE_IN_CALL && hasPrimaryOutput()) {
-        DeviceVector newDevices = getNewOutputDevices(mPrimaryOutput, true /*fromCache*/);
-        if (forceVolumeReeval && !newDevices.isEmpty()) {
-            applyStreamVolumes(mPrimaryOutput, newDevices.types(), delayMs, true);
-        }
-        waitMs = updateCallRouting(newDevices, delayMs);
+
+    if (updateCallRouting(true /*fromCache*/, delayMs, &waitMs) == NO_ERROR) {
+        // Only apply special touch sound delay once
+        delayMs = 0;
     }
     // Use reverse loop to make sure any low latency usecases (generally tones)
     // are not routed before non LL usecases (generally music).
